@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Models\City;
 class CityController extends Controller
 {
     /**
@@ -27,7 +27,20 @@ class CityController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $city=new City();
+        $city->city_name=$request->city_name;
+        $city->state_id=$request->state_id;
+        $result=$city->save();
+        if($result){
+            return response()->json([
+                'message' => 'City added successfully',
+                'code' => 200,
+
+            ]);
+        }
+        else{
+            return "City not added";
+        }
     }
 
     /**
