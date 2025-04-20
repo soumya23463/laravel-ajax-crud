@@ -68,24 +68,67 @@ class CityController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request)
     {
-        //
+        $city = City::find($request->id);
+
+        if ($city) {
+            return response()->json([
+                'status' => true,
+                'message' => 'City data found',
+                'data' => $city
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'City not found'
+            ]);
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
-        //
+
+
+        $city = City::find($request->id);
+        $city->update([
+            'state_id'      => $request->edit_state_id,
+            'city_name'     => $request->edit_city_name,
+            'status'        => $request->edit_status
+        ]);
+        if ($city) {
+            return response()->json([
+                'message' => "Data Updated Successfully!",
+                "code"    => 200,
+            ]);
+        } else {
+            return response()->json([
+                'message' => "Internal Server Error",
+                "code"    => 500
+            ]);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
-        //
+        $result = City::where('id', $request->id)->delete();
+
+        if($result) {
+            return response()->json([
+                'message' => "Data Deleted Successfully!",
+                "code"    => 200,
+            ]);
+        } else  {
+            return response()->json([
+                'message' => "Internal Server Error",
+                "code"    => 500
+            ]);
+        }
     }
 }
