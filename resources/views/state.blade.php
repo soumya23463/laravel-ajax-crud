@@ -5,8 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" >
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+
 
     <title>Laravel Ajax</title>
   </head>
@@ -40,10 +42,31 @@
                 </form>
             </div>
         </div>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <table id="cities" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Status</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+
+       <script>
         $(document).ready(function(){
             $('#submit').click(function(e){
                 e.preventDefault();
@@ -59,6 +82,7 @@
                         alert('City added successfully');
                         {{--  location.reload();  --}}
                         $('#cityForm')[0].reset();
+                        table.ajax.reload();
                     }else{
                         alert('Failed to add city');
                     }
@@ -69,7 +93,41 @@
                 }
             });
         });
-        })
+
+
+
+
+        var table = $('#cities').DataTable( {
+            ajax: "{{ route('city.index') }}",
+            columns: [
+                { "data": "city_name" },
+                { "data": "state.state_name" },
+                {
+                    "data": null,
+                    render: function(data, type, row) {
+                        if(row.status == "Active") {
+                            return `<button class="btn btn-sm btn-success">Active</button>`;
+                        } else {
+                            return `<button class="btn btn-sm btn-warning">Inactive</button>`;
+                        }
+                    }
+                },
+                {
+                    "data": null,
+                    render: function(data, type, row) {
+                        return `<button data-id="${row.id}" class="btn btn-info" data-toggle="modal" data-target="#exampleModal" id="edit"><i class="fa fa-edit"></i></button>`;
+                    }
+                },
+                {
+                    "data": null,
+                    render: function(data, type, row) {
+                        return `<button data-id="${row.id}" class="btn btn-danger" id="delete"><i class="fa fa-trash"></i></button>`;
+                    }
+                }
+            ]
+        } );
+
+        });
     </script>
   </body>
 </html>

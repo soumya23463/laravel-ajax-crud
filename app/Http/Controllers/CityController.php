@@ -11,7 +11,21 @@ class CityController extends Controller
      */
     public function index()
     {
-        //
+        $cities = City::with('state:id,state_name')
+        ->select('id', 'city_name', 'status', 'state_id')
+        ->get();
+
+        if($cities){
+            return response()->json([
+                'message' => 'Data  Found',
+                'code' => 200,
+                'data' => $cities,
+
+            ]);
+        }
+        else{
+            return "City not added";
+        }
     }
 
     /**
