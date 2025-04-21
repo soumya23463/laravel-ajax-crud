@@ -12,7 +12,7 @@ class CityController extends Controller
     public function index()
     {
         $cities = City::with('state:id,state_name')
-        ->select('id', 'city_name', 'status', 'state_id')
+        ->select('id', 'city_name', 'status', 'state_id', 'image')
         ->get();
 
         if($cities){
@@ -41,9 +41,16 @@ class CityController extends Controller
      */
     public function store(Request $request)
     {
+
         $city=new City();
         $city->city_name=$request->city_name;
         $city->state_id=$request->state_id;
+        if ($request->hasFile('city_image')) {
+            $image = $request->file('city_image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('uploads/cities'), $imageName);
+            $city->image = $imageName; // assuming `image` column exists
+        }
         $result=$city->save();
         if($result){
             return response()->json([
@@ -91,14 +98,29 @@ class CityController extends Controller
      */
     public function update(Request $request)
     {
-
-
         $city = City::find($request->id);
         $city->update([
             'state_id'      => $request->edit_state_id,
             'city_name'     => $request->edit_city_name,
             'status'        => $request->edit_status
         ]);
+
+        if ($request->hasFile('city_image')) {
+            // Delete the old image if it exists
+            if ($city->image && file_exists(public_path('uploads/cities/' . $city->image))) {
+                unlink(public_path('uploads/cities/' . $city->image));
+            }
+
+            // Save the new image
+            $image = $request->file('city_image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('uploads/cities'), $imageName);
+
+            // Update the image field in the database
+            $city->image = $imageName;
+            $city->save();
+        }
+
         if ($city) {
             return response()->json([
                 'message' => "Data Updated Successfully!",

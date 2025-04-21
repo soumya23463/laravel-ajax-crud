@@ -32,10 +32,16 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
+                        <div class="form-group">
                         <label for="city_name">City Name</label>
                         <input type="text" name="city_name" id="city_name" class="form-control">
-                    </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="city_image">City Image</label>
+                            <input type="file" name="city_image" id="city_image" class="form-control">
+                        </div>
+
                     <hr>
                     <div class="form-group">
                         <button id="submit" class="btn btn-sm btn-success">Add City</button>
@@ -52,6 +58,7 @@
                             <th>City</th>
                             <th>State</th>
                             <th>Status</th>
+                            <th>Image</th>
                             <th>Edit</th>
                             <th>Delete</th>
                         </tr>
@@ -98,6 +105,11 @@
                         <option value="Inactive">Inactive</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="city_image">City Image</label>
+                    <input type="file" name="city_image" id="city_image" class="form-control">
+                    <img id="preview_image" src="" alt="City Image" width="100" style="display:none;">
+                </div>
             </div>
         </form>
         <div class="modal-footer">
@@ -113,22 +125,37 @@
 
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
        <script>
         $(document).ready(function(){
             $('#submit').click(function(e){
                 e.preventDefault();
 
+                let formData = new FormData($('#cityForm')[0]);
+
             $.ajax({
                 type:'POST',
                 url:"{{ route('city.store') }}",
                 dataType : "json",
-                data:$('#cityForm').serialize(),
+                {{--  data:$('#cityForm').serialize(),  --}}
+                data:formData,
+                contentType: false,      // when file upload
+                processData: false,     //when file upload
                 success:function(data){
                     console.log(data);
                     if(data.code == 200){
-                        alert('City added successfully');
+                        {{--  alert('City added successfully');  --}}
                         {{--  location.reload();  --}}
+                        {{--  $('#cityForm')[0].reset();  --}}
+                        {{--  sweet alert  --}}
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'City added successfully',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
                         $('#cityForm')[0].reset();
                         table.ajax.reload();
                     }else{
@@ -137,7 +164,7 @@
                 },
                 error:function(data){
                     console.log(data);
-                    alert('Error occurred');
+
                 }
             });
         });
@@ -157,6 +184,16 @@
                             return `<button class="btn btn-sm btn-success">Active</button>`;
                         } else {
                             return `<button class="btn btn-sm btn-warning">Inactive</button>`;
+                        }
+                    }
+                },
+                {
+                    "data": "image",
+                    render: function(data, type, row) {
+                        if (data) {
+                            return `<img src="/uploads/cities/${data}" alt="City Image" width="60" height="60" style="object-fit:cover; border-radius:6px;">`;
+                        } else {
+                            return `<span>No Image</span>`;
                         }
                     }
                 },
@@ -192,12 +229,17 @@
                     $('select[name="edit_state_id"]').val(response.data.state_id);
                     $('input[name="edit_city_name"]').val(response.data.city_name);
                     $('select[name="edit_status"]').val(response.data.status);
+                    if (response.data.image) {
+                        $('#preview_image').attr('src', '/uploads/cities/' + response.data.image).show();
+                    } else {
+                        $('#preview_image').hide();
+                    }
                 }
             })
         })
 
 
-        $(document).on('click', '#update', function() {
+        {{--  $(document).on('click', '#update', function() {
             if(confirm('Are you sure you want to update??')) {
                 $.ajax({
                     url: '{{ route("city.update") }}',
@@ -211,10 +253,59 @@
                     }
                 })
             }
-        })
+        })  --}}
 
 
-        $(document).on('click', '#delete', function() {
+        $(document).on('click', '#update', function () {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you really want to update this city?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, update it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let formData = new FormData($('#editCityForm')[0]);
+
+                    $.ajax({
+                        url: '{{ route("city.update") }}',
+                        type: 'post',
+                        dataType: 'json',
+                        {{--  data: $('#editCityForm').serialize(),  --}}
+                        data: formData,
+                        contentType: false,      // when file upload
+                        processData: false,     //when file upload
+                        {{--  data: $('#editCityForm').serialize(),  --}}
+                        success: function (response) {
+                            $('#editCityForm')[0].reset();
+                            table.ajax.reload();
+                            $('#exampleModal').modal('hide');
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Updated!',
+                                text: 'City has been updated successfully.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        },
+                        error: function (xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Failed to update city. Please try again.'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+
+
+        {{--  $(document).on('click', '#delete', function() {
             if(confirm('Are you sure you want delete??')){
                 $.ajax({
                     url: "{{ route('city.destroy') }}",
@@ -229,7 +320,51 @@
                     }
                 })
             }
-        })
+        })  --}}
+
+        $(document).on('click', '#delete', function () {
+            let cityId = $(this).data('id');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This city will be permanently deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('city.destroy') }}",
+                        type: "POST",
+                        dataType: 'json',
+                        data: {
+                            "_token": "{{ csrf_token() }}",
+                            "id": cityId
+                        },
+                        success: function (response) {
+                            table.ajax.reload();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'City has been deleted successfully.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        },
+                        error: function () {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Failed to delete the city. Please try again.'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
         });
     </script>
   </body>
